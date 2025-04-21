@@ -1,4 +1,5 @@
+data
+datasets
 data/*/*.jpg
-!data/X2/1.X2.1.4.25.16012025.jpg
-!data/X11/1.X11.1.6.195.26022025.jpg
-!data/Xb/1.Xb.1.3.45.13012025.jpg
+data/*
+save
