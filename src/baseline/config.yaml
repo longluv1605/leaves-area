@@ -1,0 +1,31 @@
+# Cấu hình mặc định
+CONFIG:
+    green_bgr: [0, 255, 0]
+    coin_diameter_mm: 21.25
+    hue_range_lower: 40
+    hue_range_upper: 20
+    saturation_threshold: 85
+    value_threshold: 85
+    min_radius_coin: 10
+    max_radius_coin: 60
+    min_distance_circles: 50
+    canny_lower: 50
+    canny_upper: 150
+    hough_param1: 50
+    hough_param2: 30
+    blur_kernel_size: [5, 5]
+    blur_sigma: 1
+    median_blur_ksize: 5
+    min_contour_area: 2000
+    circle_color: [255, 0, 0]
+    circle_thickness: 4
+    contour_color: [0, 0, 255]
+    contour_thickness: 2
+    coin_color: [0, 255, 255]
+
+RESULTS:
+    save_dir: ./results/baseline
+    image_paths:
+        - images/im1.jpg
+        - images/im2.jpg
+        - images/im3.jpg

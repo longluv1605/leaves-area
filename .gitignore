@@ -3,3 +3,4 @@ datasets
 data/*/*.jpg
 data/*
 save
+**pycache**

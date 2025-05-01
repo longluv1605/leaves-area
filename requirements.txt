@@ -7,3 +7,4 @@ matplotlib
 pandas
 torchmetrics
 torchinfo
+pyyaml
