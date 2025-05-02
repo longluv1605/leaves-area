@@ -1,17 +1,40 @@
 import os
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch import optim
 import platform
+import yaml
 
 from models.deeplab import DeepLabV3Plus
 from utils.data import SegmentationDataset, get_transforms
 from utils.loss import DiceCELoss
-from utils.training import train_model, eval_model, evaluate_metrics
+from utils.training import train_model, eval_model, evaluate_metrics, EarlyStopping
 from utils.visualize import visualize_train_process, visualize_segmentation
+
+
+def load_config(config_path: str) -> dict:
+    """Load configuration from a YAML file.
+
+    Args:
+        config_path (str): Path to the YAML configuration file.
+
+    Returns:
+        dict: Configuration dictionary.
+
+    Raises:
+        FileNotFoundError: If the config file does not exist.
+        yaml.YAMLError: If the config file is invalid.
+    """
+    if not os.path.isfile(config_path):
+        raise FileNotFoundError(f"Config file does not exist: {config_path}")
+    try:
+        with open(config_path, 'r') as f:
+            return yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        raise yaml.YAMLError(f"Invalid YAML file: {str(e)}")
 
 
 def setup_data_loaders(
@@ -21,6 +44,7 @@ def setup_data_loaders(
     val_mask_dir: str,
     batch_size: int = 4,
     num_workers: int = 0,
+    transform_config: Optional[dict] = None,
 ) -> Tuple[DataLoader, DataLoader]:
     """Set up training and validation data loaders.
 
@@ -32,6 +56,8 @@ def setup_data_loaders(
         batch_size (int, optional): Batch size for data loaders. Defaults to 4.
         num_workers (int, optional): Number of worker threads for data loading.
             Defaults to 0 for compatibility.
+        transform_config (Optional[dict], optional): Configuration for data transformations.
+            Defaults to None.
 
     Returns:
         Tuple[DataLoader, DataLoader]: Training and validation data loaders.
@@ -50,15 +76,16 @@ def setup_data_loaders(
         raise ValueError("num_workers must be non-negative")
 
     # Initialize datasets
+    transform = get_transforms(transform_config)
     train_dataset = SegmentationDataset(
         image_dir=train_image_dir,
         mask_dir=train_mask_dir,
-        transform=get_transforms(),
+        transform=transform,
     )
     val_dataset = SegmentationDataset(
         image_dir=val_image_dir,
         mask_dir=val_mask_dir,
-        transform=get_transforms(),
+        transform=transform,
     )
 
     # Initialize data loaders
@@ -88,7 +115,7 @@ def train_and_evaluate(
     optimizer: optim.Optimizer,
     device: torch.device,
     num_epochs: int,
-    early_stopping=None,
+    early_stopping: EarlyStopping=None,
 ) -> Tuple[List[float], List[float], List[float], List[float], List[float], List[float]]:
     """Train and evaluate the model, collecting metrics for each epoch.
 
@@ -138,7 +165,7 @@ def train_and_evaluate(
         if early_stopping and early_stopping(val_loss, model):
             print("Early stopping triggered")
             break
-
+        
     return train_losses, train_ious, train_accs, val_losses, val_ious, val_accs
 
 
@@ -199,24 +226,30 @@ def visualize_results(
 def main() -> None:
     """Main function to train and evaluate a DeepLabV3+ model for semantic segmentation.
 
-    Sets up the model, datasets, and training pipeline, trains the model with early stopping,
-    visualizes training metrics, and generates segmentation results for validation and new images.
+    Loads configuration from config.yaml, sets up the model, datasets, and training pipeline,
+    trains the model with early stopping, visualizes training metrics, and generates segmentation
+    results for validation and new images.
 
     Raises:
         ValueError: If configuration parameters are invalid.
-        FileNotFoundError: If dataset or image paths are invalid.
+        FileNotFoundError: If dataset, image paths, or config file are invalid.
         RuntimeError: If training, evaluation, or visualization fails.
     """
+    # Load configuration
+    config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
+    config = load_config(config_path)
+
     # Configuration
-    data_dir = "/kaggle/input/spinach-leaf-area/spinach"
-    results_dir = "results/deeplabv3plus"
-    models_dir = "save/models"
-    batch_size = 4
-    num_epochs = 1
-    learning_rate = 1e-4
-    num_classes = 3
-    class_weights = torch.tensor([0.1, 1.0, 5.0])
-    num_workers = 0 if platform.system() == "Windows" else 4  # Windows compatibility
+    data_dir = config.get("data_dir", "datasets/spinach")
+    results_dir = config.get("results_dir", "results/deeplabv3plus")
+    models_dir = config.get("models_dir", "save/models")
+    batch_size = config.get("batch_size", 4)
+    num_epochs = config.get("num_epochs", 10)
+    learning_rate = config.get("learning_rate", 1e-4)
+    num_classes = config.get("num_classes", 3)
+    num_workers = 0 if platform.system() == "Windows" else config.get("num_workers", 4)
+    transform_config = config.get("transformations", {})
+    loss_config = config.get("loss", {})
     model_name = f"model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pth"
     model_path = os.path.join(models_dir, model_name)
 
@@ -242,10 +275,17 @@ def main() -> None:
         val_mask_dir=val_mask_dir,
         batch_size=batch_size,
         num_workers=num_workers,
+        transform_config=transform_config,
     )
 
     # Setup loss, optimizer, and early stopping
-    criterion = DiceCELoss(class_weights=class_weights.to(device))
+    class_weights = torch.tensor(loss_config.get("class_weights", [0.1, 1.0, 5.0]))
+    criterion = DiceCELoss(
+        class_weights=class_weights.to(device),
+        smooth=loss_config.get("smooth", 1e-5),
+        dice_ce_weights=tuple(loss_config.get("dice_ce_weights", [0.5, 0.5])),
+        ignore_index=loss_config.get("ignore_index", None),
+    )
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # early_stopping = EarlyStopping(patience=5, mode='min', save_path=model_path)
     early_stopping = None
