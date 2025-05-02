@@ -2,5 +2,5 @@ data
 datasets
 data/*/*.jpg
 data/*
-save
+save/*/*.pth
 **pycache**

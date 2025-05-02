@@ -208,7 +208,7 @@ def main() -> None:
         RuntimeError: If training, evaluation, or visualization fails.
     """
     # Configuration
-    data_dir = "datasets/spinach"
+    data_dir = "/kaggle/input/spinach-leaf-area/spinach"
     results_dir = "results/deeplabv3plus"
     models_dir = "save/models"
     batch_size = 4
