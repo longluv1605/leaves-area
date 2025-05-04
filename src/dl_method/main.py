@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from torch import optim
 import platform
 import yaml
+import time
 
 from models.deeplab import DeepLabV3Plus
 from utils.data import SegmentationDataset, get_transforms
@@ -222,7 +223,35 @@ def visualize_results(
         except (FileNotFoundError, RuntimeError) as e:
             raise RuntimeError(f"Failed to visualize new image {image_path}: {str(e)}")
 
+def inference_time(
+    model: nn.Module,
+    dataset: SegmentationDataset,
+    device: torch.device,
+) -> float:
+    """Compute model inference time on a dataset.
 
+    Args:
+        model (nn.Module): The trained segmentation model.
+        dataset (SegmentationDataset): Validation dataset for visualization.
+        device (torch.device): Device to run computations on.
+
+    Return:
+        float: Average time computing on a dataloader.
+    """
+    model.to(device)
+    model.eval()
+    
+    start = time.time()
+    with torch.inference_mode():
+        for image, _ in dataset:
+            image.to(device)
+            pred_mask = model(image.unsqueeze(0))
+            pred_mask = torch.argmax(pred_mask.squeeze(), dim=0).cpu().numpy()
+    end = time.time()
+    total_time = end - start
+    avg_time = total_time / len(dataset)
+    
+    return avg_time
 def main() -> None:
     """Main function to train and evaluate a DeepLabV3+ model for semantic segmentation.
 
@@ -248,6 +277,8 @@ def main() -> None:
     learning_rate = config.get("learning_rate", 1e-4)
     num_classes = config.get("num_classes", 3)
     num_workers = 0 if platform.system() == "Windows" else config.get("num_workers", 4)
+    patience = config.get("patience", 5)
+    delta = config.get("delta", 0.0005)
     transform_config = config.get("transformations", {})
     loss_config = config.get("loss", {})
     model_name = f"model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pth"
@@ -287,8 +318,7 @@ def main() -> None:
         ignore_index=loss_config.get("ignore_index", None),
     )
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    # early_stopping = EarlyStopping(patience=5, mode='min', save_path=model_path)
-    early_stopping = None
+    early_stopping = EarlyStopping(patience=patience, delta=delta, mode='min', save_path=model_path)
 
     # Train and evaluate
     train_losses, train_ious, train_accs, val_losses, val_ious, val_accs = train_and_evaluate(
@@ -303,7 +333,7 @@ def main() -> None:
         val_losses,
         val_ious,
         val_accs,
-        save_path=os.path.join(results_dir, "training_metrics.png"),
+        # save_path=os.path.join(results_dir, "training_metrics.png"),
     )
 
     # Load best model
@@ -312,8 +342,9 @@ def main() -> None:
 
     # Visualize results
     new_image_paths = [f"images/im{i}.jpg" for i in range(1, 4)]
-    visualize_results(model, device, val_loader.dataset, new_image_paths, results_dir)
-
+    visualize_results(model, device, val_loader.dataset, new_image_paths, results_dir=None)
+    avg_time = inference_time(model, train_loader.dataset, device)
+    print(f'Average inference time: {avg_time} seconds.')
 
 if __name__ == "__main__":
     main()

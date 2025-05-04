@@ -6,17 +6,58 @@ This repository implements the DeepLabV3+ model for semantic segmentation using 
 
 ```plain
 leaves-area/
-└── src/
-    └── dl_method/
-        ├── models/
-        │   └── deeplab.py
-        ├── utils/
-        │   ├── data.py
-        │   ├── loss.py
-        │   ├── training.py
-        │   └── visualize.py
-        ├── config.yaml
-        └── main.py
+├── datasets/
+│   └── spinach/
+│       ├── images/
+│       │   ├── train/
+│       │   │   ├── train_image.jpg
+│       │   │   └── ...
+│       │   └── val/
+│       │       ├── val_image.jpg
+│       │       └── ...
+│       └── masks/
+│           ├── train/
+│           │   ├── train_image_mask.png
+│           │   └── ...
+│           └── val/
+│               ├── val_image_mask.png
+│               └── ...
+├── images/
+│   ├── im1.jpg
+│   ├── im2.jpg
+│   └── ...
+├── results/
+│   ├── baseline/
+│   │   └── *.png
+│   └── deeplabv3plus/
+│       └── *.png
+├── save/
+│   ├── hyperparams/
+│   │   └── *.pth
+│   └── models/
+│       └── deeplabv3plus.pth
+├── src/
+│   ├── baseline/
+│   │   ├── main.py
+│   │   ├── config.yaml
+│   │   ├── plotting.py
+│   │   └── segment.py
+│   └── dl_method/
+│       ├── models/
+│       │   └── deeplab.py
+│       ├── utils/
+│       │   ├── data.py
+│       │   ├── loss.py
+│       │   ├── training.py
+│       │   └── visualize.py
+│       ├── config.yaml
+│       └── main.py
+├── .gitignore
+├── README.MD
+├── requirements.txt
+├── data_analyst.ipynb
+├── deeplabv3plus*.ipynb
+└── baseline.ipynb
 ```
 
 ## Installation
@@ -24,8 +65,8 @@ leaves-area/
 1. Clone the repository:
 
     ```bash
-    git clone <repository_url>
-    cd repo
+    git clone https://github.com/longluv1605/leaves-area
+    cd leaves-area
     ```
 
 2. Install dependencies:
@@ -51,62 +92,12 @@ See `requirements.txt` for a complete list.
 
 ## Usage
 
-The `src/dl_method/main.py` script trains a DeepLabV3+ model on a spinach segmentation dataset, evaluates performance, and visualizes results. It uses early stopping to prevent overfitting and saves the best model and visualization results. Hyperparameters, data augmentations, and loss settings are configured via `src/dl/config.yaml`.
-
-### Directory Setup
-
-Ensure your dataset is organized as follows:
-
-```plain
-datasets/spinach/
-├── images/
-│   ├── train/
-│   └── val/
-├── masks/
-    ├── train/
-    └── val/
-```
-
-Place new images for segmentation in:
-
-```plain
-images/
-├── im1.jpg
-├── im2.jpg
-├── im3.jpg
-```
-
-### Configuration
-
-Edit `src/dl_method/config.yaml` to adjust settings:
-
-```yaml
-data_dir: datasets/spinach
-results_dir: results/deeplabv3plus
-models_dir: save/models
-batch_size: 4
-num_epochs: 1
-learning_rate: 0.0001
-num_classes: 3
-num_workers: 4
-transformations:
-  horizontal_flip_p: 0.5
-  random_rotate_p: 0.5
-  elastic_transform_p: 0.3
-  grid_distortion_p: 0.3
-  normalize_mean: [0.485, 0.456, 0.406]
-  normalize_std: [0.229, 0.224, 0.225]
-loss:
-  smooth: 0.00001
-  class_weights: [0.1, 1.0, 5.0]
-  dice_ce_weights: [0.5, 0.5]
-  ignore_index: null
-```
+The `src/dl_method/main.py` script trains a DeepLabV3+ model on a spinach segmentation dataset, evaluates performance, and visualizes results. It uses early stopping to prevent overfitting and saves the best model and visualization results. Hyperparameters, data augmentations, and loss settings are configured via `src/dl_method/config.yaml`.
 
 ### Running the Script
 
 ```bash
-python src/dlmain.py
+python src/dl_method/main.py
 ```
 
 This will:

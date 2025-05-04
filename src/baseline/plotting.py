@@ -61,6 +61,6 @@ def show_images(
             plt.savefig(save_path, bbox_inches='tight', dpi=300)
         except Exception as e:
             raise ValueError(f"Failed to save figure to {save_path}: {e}")
-
-    plt.show()
+    else:
+        plt.show()
     plt.close(fig)  # Close figure to free memory
