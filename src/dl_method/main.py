@@ -251,7 +251,7 @@ def inference_time(
     start = time.time()
     with torch.inference_mode():
         for image, _ in dataset:
-            image.to(device)
+            image = image.to(device)
             pred_mask = model(image.unsqueeze(0))
             pred_mask = torch.argmax(pred_mask.squeeze(), dim=0).cpu().numpy()
     end = time.time()

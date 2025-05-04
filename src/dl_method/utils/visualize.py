@@ -98,7 +98,7 @@ def visualize_train_process(
         plt.show()
 
     # Close figure to prevent memory leaks
-    plt.close(fig)
+    # plt.close(fig)
 
 def show_images(
     image: np.ndarray,
@@ -169,7 +169,7 @@ def show_images(
         plt.show()
 
     # Close figure to prevent memory leaks
-    plt.close(fig)
+    # plt.close(fig)
 
 
 def visualize_segmentation(
