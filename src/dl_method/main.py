@@ -284,8 +284,7 @@ def main() -> None:
     learning_rate = config.get("learning_rate", 1e-4)
     num_classes = config.get("num_classes", 3)
     num_workers = 0 if platform.system() == "Windows" else config.get("num_workers", 4)
-    patience = config.get("patience", 5)
-    delta = config.get("delta", 0.0005)
+    early_stopping = config.get("early_stopping", {})
     transform_config = config.get("transformations", {})
     loss_config = config.get("loss", {})
     model_name = f"model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pth"
@@ -325,7 +324,8 @@ def main() -> None:
         ignore_index=loss_config.get("ignore_index", None),
     )
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    early_stopping = EarlyStopping(patience=patience, delta=delta, mode='min', save_path=model_path)
+    early_stopping = EarlyStopping(**early_stopping, mode='min', save_path=model_path)
+    early_stopping = None
 
     # Train and evaluate
     train_losses, train_ious, train_accs, val_losses, val_ious, val_accs = train_and_evaluate(
@@ -346,6 +346,8 @@ def main() -> None:
     # Load best model
     if early_stopping and early_stopping.best_model_state is not None:
         model.load_state_dict(early_stopping.best_model_state)
+    else:
+        torch.save(model.state_dict(), model_path)
 
     # Visualize results
     new_image_paths = [f"images/im{i}.jpg" for i in range(1, 4)]

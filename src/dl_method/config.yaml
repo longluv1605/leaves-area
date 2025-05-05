@@ -6,8 +6,9 @@ num_epochs: 10
 learning_rate: 0.0001
 num_classes: 3
 num_workers: 4
-patience: 5
-delta: 0.0005
+early_stopping:
+  patience: 5
+  delta: 0.0005
 transformations:
   horizontal_flip_p: 0.5
   random_rotate_p: 0.5
