@@ -292,6 +292,7 @@ def main() -> None:
 
     # Configuration
     data_dir = config.get("data_dir", "datasets/spinach")
+    test_images_dir = config.get("test_images_dir", "test_images")
     results_dir = config.get("results_dir", "results/deeplabv3plus")
     models_dir = config.get("models_dir", "save/models")
     batch_size = config.get("batch_size", 4)
@@ -339,8 +340,7 @@ def main() -> None:
         ignore_index=loss_config.get("ignore_index", None),
     )
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    # early_stopping = EarlyStopping(**early_stopping, mode='min', save_path=model_path)
-    early_stopping = None
+    early_stopping = EarlyStopping(**early_stopping, mode='min', save_path=model_path)
 
     # Train and evaluate
     train_losses, train_ious, train_accs, val_losses, val_ious, val_accs = train_and_evaluate(
@@ -348,6 +348,8 @@ def main() -> None:
     )
 
     # Visualize training process
+    print('###############################################')
+    print('Training log:')
     visualize_train_process(
         train_losses,
         train_ious,
@@ -355,7 +357,7 @@ def main() -> None:
         val_losses,
         val_ious,
         val_accs,
-        # save_path=os.path.join(results_dir, "training_metrics.png"),
+        save_path=os.path.join(results_dir, "training_metrics.png"),
     )
 
     # Load best model
@@ -366,8 +368,13 @@ def main() -> None:
         print(f'Model is saved to {model_path}.')
 
     # Visualize results
-    # new_image_paths = [f"images/im{i}.jpg" for i in range(1, 4)]
-    # visualize_results(model, device, val_loader.dataset, new_image_paths, results_dir=None)
+    print('###############################################')
+    print('Testing segmentation:')
+    new_image_paths = os.listdir(test_images_dir)
+    visualize_results(model, device, val_loader.dataset, new_image_paths, results_dir)
+    
+    # Compute inference time
+    print('###############################################')
     avg_time = inference_time(model, train_loader.dataset, device)
     print(f'Average inference time: {avg_time} seconds.')
 

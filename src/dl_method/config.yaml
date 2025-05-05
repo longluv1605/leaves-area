@@ -1,4 +1,5 @@
 data_dir: /kaggle/input/spinach-leaf-area/spinach
+test_images_dir: test_images
 results_dir: results/deeplabv3plus
 models_dir: save/models
 batch_size: 4
