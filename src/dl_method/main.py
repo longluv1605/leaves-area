@@ -162,6 +162,14 @@ def train_and_evaluate(
         print(f"\t-> Val Loss: {val_loss:.4f}, mIoU: {val_iou:.4f}, Acc: {val_acc:.4f}")
         print('#################################################################')
 
+        ########################################
+        new_image_paths = ["images/im1.jpg"]
+        visualize_results(
+            model=model,
+            device=device,
+            new_image_paths=new_image_paths
+        )
+        
         # Check early stopping
         if early_stopping and early_stopping(val_loss, model):
             print("Early stopping triggered")
@@ -324,7 +332,7 @@ def main() -> None:
         ignore_index=loss_config.get("ignore_index", None),
     )
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    early_stopping = EarlyStopping(**early_stopping, mode='min', save_path=model_path)
+    # early_stopping = EarlyStopping(**early_stopping, mode='min', save_path=model_path)
     early_stopping = None
 
     # Train and evaluate
@@ -344,14 +352,14 @@ def main() -> None:
     )
 
     # Load best model
-    if early_stopping and early_stopping.best_model_state is not None:
+    if early_stopping is not None and early_stopping.best_model_state is not None:
         model.load_state_dict(early_stopping.best_model_state)
     else:
         torch.save(model.state_dict(), model_path)
 
     # Visualize results
     new_image_paths = [f"images/im{i}.jpg" for i in range(1, 4)]
-    visualize_results(model, device, val_loader.dataset, new_image_paths, results_dir=None)
+    # visualize_results(model, device, val_loader.dataset, new_image_paths, results_dir=None)
     avg_time = inference_time(model, train_loader.dataset, device)
     print(f'Average inference time: {avg_time} seconds.')
 

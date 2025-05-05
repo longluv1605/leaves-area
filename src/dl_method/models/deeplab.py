@@ -31,7 +31,7 @@ class AtrousConvBlock(nn.Module):
             bias=False
         )
         self.bn = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ReLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply atrous convolution, batch normalization, and ReLU activation.
@@ -67,7 +67,7 @@ class ASPP(nn.Module):
         self.branch1 = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
 
         # 3x3 Convolution branches with different atrous rates
@@ -80,14 +80,14 @@ class ASPP(nn.Module):
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
 
         # Output convolution
         self.conv_out = nn.Sequential(
             nn.Conv2d(out_channels * 5, out_channels, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Dropout(dropout)
         )
 
@@ -107,9 +107,11 @@ class ASPP(nn.Module):
         out3 = self.branch3(x)
         out4 = self.branch4(x)
 
-        # Global Average Pooling with interpolation
-        out5 = self.gap(x)
-        out5 = F.interpolate(out5, size=size, mode='bilinear', align_corners=True)
+        # Temporarily switch GAP branch to eval mode
+        self.gap.eval()  # <- this line fixes the issue
+        with torch.no_grad():
+            out5 = self.gap(x)
+        out5 = F.interpolate(out5, size=size, mode='bilinear', align_corners=True)     
 
         # Concatenate and process outputs
         merged = torch.cat([out1, out2, out3, out4, out5], dim=1)
@@ -138,17 +140,17 @@ class DeepLabV3Decoder(nn.Module):
         self.low_level_reduce = nn.Sequential(
             nn.Conv2d(low_level_in_channels, 48, kernel_size=1, bias=False),
             nn.BatchNorm2d(48),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
 
         # Decoder layers
         self.decoder = nn.Sequential(
             nn.Conv2d(48 + aspp_out_channels, 256, kernel_size=1, bias=False),
             nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Conv2d(256, 256, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Conv2d(256, num_classes, kernel_size=1)
         )
 
