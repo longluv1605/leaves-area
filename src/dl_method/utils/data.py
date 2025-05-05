@@ -138,26 +138,36 @@ def get_transforms(config: Optional[Dict[str, Any]] = None) -> A.Compose:
     if config is not None:
         default_config.update(config)
 
-    # Validate parameters
+    # Validate probabilities
     for prob_key in ["horizontal_flip_p", "random_rotate_p", "elastic_transform_p", "grid_distortion_p"]:
         prob = default_config[prob_key]
         if not isinstance(prob, (int, float)) or not 0 <= prob <= 1:
             raise ValueError(f"{prob_key} must be a number between 0 and 1, got {prob}")
+
+    # Validate normalization
     for key in ["normalize_mean", "normalize_std"]:
+        if key not in default_config:
+            continue
         values = default_config[key]
         if not isinstance(values, list) or len(values) != 3 or any(not isinstance(v, (int, float)) for v in values):
             raise ValueError(f"{key} must be a list of three numbers, got {values}")
 
-    return A.Compose([
+    # Compose transforms
+    transforms = [
         A.HorizontalFlip(p=default_config["horizontal_flip_p"]),
         A.RandomRotate90(p=default_config["random_rotate_p"]),
         A.ElasticTransform(p=default_config["elastic_transform_p"]),
         A.GridDistortion(p=default_config["grid_distortion_p"]),
-        A.Normalize(
-            mean=default_config["normalize_mean"],
-            std=default_config["normalize_std"],
-        ) if 'normalize_mean' in default_config.keys() 
-        and 'normalize_std' in default_config.keys()
-        else ToTensorV2(),
-        ToTensorV2(),
-    ])
+    ]
+
+    if "normalize_mean" in default_config and "normalize_std" in default_config:
+        transforms.append(
+            A.Normalize(
+                mean=default_config["normalize_mean"],
+                std=default_config["normalize_std"],
+            )
+        )
+
+    transforms.append(ToTensorV2())
+
+    return A.Compose(transforms)
