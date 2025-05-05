@@ -172,7 +172,6 @@ def train_and_evaluate(
             f"\t-> Train Loss: {train_loss:.4f}, mIoU: {train_iou:.4f}, Acc: {train_acc:.4f}"
         )
         print(f"\t-> Val Loss: {val_loss:.4f}, mIoU: {val_iou:.4f}, Acc: {val_acc:.4f}")
-        print("#################################################################")
 
         ########################################
         if test_image_path:
@@ -181,7 +180,7 @@ def train_and_evaluate(
                 device=device,
                 new_image_paths=test_image_path,
                 results_dir=results_dir,
-                image_name=f"model_epoch_{epoch}",
+                image_name=f"model_epoch_{epoch + 1}",
             )
         ########################################
 
@@ -189,6 +188,7 @@ def train_and_evaluate(
         if early_stopping is not None and early_stopping(val_loss, model):
             print("Early stopping triggered")
             break
+        print("#################################################################")
 
     return train_losses, train_ious, train_accs, val_losses, val_ious, val_accs
 
