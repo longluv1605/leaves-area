@@ -124,7 +124,7 @@ def evaluate_metrics(
         raise ValueError("device must be a torch.device instance")
 
     model.eval()
-    iou_metric = MulticlassJaccardIndex(num_classes=num_classes).to(device)
+    iou_metric = MulticlassJaccardIndex(num_classes=num_classes, average='weighted').to(device)
     acc_metric = MulticlassAccuracy(num_classes=num_classes, average="weighted").to(device)
 
     with torch.no_grad():
