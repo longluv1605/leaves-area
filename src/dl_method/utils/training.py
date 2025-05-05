@@ -124,9 +124,11 @@ def evaluate_metrics(
         raise ValueError("device must be a torch.device instance")
 
     model.eval()
-    iou_metric = MulticlassJaccardIndex(num_classes=num_classes, average='weighted').to(device)
+    iou_metric = MulticlassJaccardIndex(num_classes=num_classes).to(device)
     acc_metric = MulticlassAccuracy(num_classes=num_classes, average="weighted").to(device)
 
+    iou_metric.reset()
+    acc_metric.reset()
     with torch.no_grad():
         for batch_idx, (images, targets) in enumerate(tqdm(loader, desc="Evaluating metrics", unit='batch')):
             try:
@@ -140,8 +142,6 @@ def evaluate_metrics(
             
     iou = iou_metric.compute().cpu().numpy()
     accuracy = acc_metric.compute().item()
-    iou_metric.reset()
-    acc_metric.reset()
 
     return iou, accuracy
 

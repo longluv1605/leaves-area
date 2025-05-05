@@ -130,8 +130,8 @@ def get_transforms(config: Optional[Dict[str, Any]] = None) -> A.Compose:
         "random_rotate_p": 0.5,
         "elastic_transform_p": 0.3,
         "grid_distortion_p": 0.3,
-        "normalize_mean": [0.485, 0.456, 0.406],
-        "normalize_std": [0.229, 0.224, 0.225],
+        # "normalize_mean": [0.485, 0.456, 0.406],
+        # "normalize_std": [0.229, 0.224, 0.225],
     }
 
     # Update with provided config
@@ -156,6 +156,8 @@ def get_transforms(config: Optional[Dict[str, Any]] = None) -> A.Compose:
         A.Normalize(
             mean=default_config["normalize_mean"],
             std=default_config["normalize_std"],
-        ),
+        ) if 'normalize_mean' in default_config.keys() 
+        and 'normalize_std' in default_config.keys()
+        else ToTensorV2(),
         ToTensorV2(),
     ])
