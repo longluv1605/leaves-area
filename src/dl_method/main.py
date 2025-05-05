@@ -230,7 +230,7 @@ def visualize_results(
     if new_image_paths is not None:
         for i, image_path in enumerate(new_image_paths, 1):
             if results_dir:
-                save_path = os.path.join(results_dir, f"new_image_{i}.png")
+                save_path = os.path.join(results_dir, f"test_image_{i}.png")
             else:
                 save_path = None
             if not os.path.isfile(image_path):
