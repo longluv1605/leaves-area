@@ -223,6 +223,7 @@ class EarlyStopping:
             self.counter += 1
             if self.counter >= self.patience:
                 self.early_stop = True
+            print(f'Early stopping triggered [{self.counter} / {self.patience}]')
         else:
             self.best_score = score
             self.best_model_state = model.state_dict()
@@ -243,5 +244,6 @@ class EarlyStopping:
         """
         try:
             torch.save(model.state_dict(), self.save_path)
+            print(f'Saved model to {self.save_path}!!!')
         except OSError as e:
             raise OSError(f"Failed to save model to {self.save_path}: {str(e)}")
