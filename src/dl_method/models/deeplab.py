@@ -177,12 +177,12 @@ class DeepLabV3Decoder(nn.Module):
 class ResNetBackbone(nn.Module):
     """ResNet101 backbone modified for DeepLabV3+ with atrous convolutions."""
 
-    def __init__(self, weights: Optional[ResNet101_Weights] = ResNet101_Weights.DEFAULT) -> None:
+    def __init__(self, weights: Optional[ResNet101_Weights] = None) -> None:
         """Initialize the ResNet101 backbone.
 
         Args:
             weights (Optional[ResNet101_Weights], optional): Pretrained weights for ResNet101.
-                Defaults to ResNet101_Weights.DEFAULT.
+                Defaults to None.
         """
         super().__init__()
         resnet = resnet101(weights=weights)
