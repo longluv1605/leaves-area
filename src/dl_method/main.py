@@ -116,7 +116,8 @@ def train_and_evaluate(
     optimizer: optim.Optimizer,
     device: torch.device,
     num_epochs: int,
-    early_stopping: EarlyStopping=None,
+    early_stopping: EarlyStopping = None,
+    test_image_path: str = None,
 ) -> Tuple[List[float], List[float], List[float], List[float], List[float], List[float]]:
     """Train and evaluate the model, collecting metrics for each epoch.
 
@@ -162,12 +163,12 @@ def train_and_evaluate(
         print(f"\t-> Val Loss: {val_loss:.4f}, mIoU: {val_iou:.4f}, Acc: {val_acc:.4f}")
         print('#################################################################')
 
+        
         ########################################
-        new_image_paths = ["images/im1.jpg"]
         visualize_results(
             model=model,
             device=device,
-            new_image_paths=new_image_paths
+            new_image_paths=test_image_path
         )
         ########################################
         
@@ -293,6 +294,7 @@ def main() -> None:
     # Configuration
     data_dir = config.get("data_dir", "datasets/spinach")
     test_images_dir = config.get("test_images_dir", "test_images")
+    test_image_paths = os.listdir(test_images_dir)
     results_dir = config.get("results_dir", "results/deeplabv3plus")
     models_dir = config.get("models_dir", "save/models")
     batch_size = config.get("batch_size", 4)
@@ -343,8 +345,12 @@ def main() -> None:
     early_stopping = EarlyStopping(**early_stopping, mode='min', save_path=model_path)
 
     # Train and evaluate
+    if len(test_image_paths) > 0:
+        test_image_path = [test_image_paths[0]]
     train_losses, train_ious, train_accs, val_losses, val_ious, val_accs = train_and_evaluate(
-        model, train_loader, val_loader, criterion, optimizer, device, num_epochs, early_stopping
+        model, train_loader, val_loader, 
+        criterion, optimizer, device, 
+        num_epochs, early_stopping, test_image_path
     )
 
     # Visualize training process
@@ -370,8 +376,7 @@ def main() -> None:
     # Visualize results
     print('###############################################')
     print('Testing segmentation:')
-    new_image_paths = os.listdir(test_images_dir)
-    visualize_results(model, device, val_loader.dataset, new_image_paths, results_dir)
+    visualize_results(model, device, val_loader.dataset, test_image_paths, results_dir)
     
     # Compute inference time
     print('###############################################')
