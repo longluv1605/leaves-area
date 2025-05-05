@@ -31,7 +31,7 @@ class AtrousConvBlock(nn.Module):
             bias=False
         )
         self.bn = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ReLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply atrous convolution, batch normalization, and ReLU activation.
@@ -67,7 +67,7 @@ class ASPP(nn.Module):
         self.branch1 = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
 
         # 3x3 Convolution branches with different atrous rates
@@ -80,14 +80,14 @@ class ASPP(nn.Module):
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
 
         # Output convolution
         self.conv_out = nn.Sequential(
             nn.Conv2d(out_channels * 5, out_channels, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Dropout(dropout)
         )
 
@@ -138,17 +138,17 @@ class DeepLabV3Decoder(nn.Module):
         self.low_level_reduce = nn.Sequential(
             nn.Conv2d(low_level_in_channels, 48, kernel_size=1, bias=False),
             nn.BatchNorm2d(48),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
 
         # Decoder layers
         self.decoder = nn.Sequential(
             nn.Conv2d(48 + aspp_out_channels, 256, kernel_size=1, bias=False),
             nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Conv2d(256, 256, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Conv2d(256, num_classes, kernel_size=1)
         )
 
@@ -177,15 +177,15 @@ class DeepLabV3Decoder(nn.Module):
 class ResNetBackbone(nn.Module):
     """ResNet101 backbone modified for DeepLabV3+ with atrous convolutions."""
 
-    def __init__(self, weights: Optional[ResNet101_Weights] = None) -> None:
+    def __init__(self, pretrained: bool = True) -> None:
         """Initialize the ResNet101 backbone.
 
         Args:
-            weights (Optional[ResNet101_Weights], optional): Pretrained weights for ResNet101.
-                Defaults to None.
+            pretrained (bool): Pretrained weights for ResNet101.
+                Defaults to True.
         """
         super().__init__()
-        resnet = resnet101(weights=weights)
+        resnet = resnet101(pretrained)
         self.low_level_channels = 256
         self.high_level_channels = 2048
 
