@@ -38,7 +38,9 @@ def train_model(
     model.train()
     epoch_loss = 0.0
     num_batches = len(loader)
-    for batch_idx, (images, targets) in enumerate(tqdm(loader, desc="Training", unit='batch')):
+    for batch_idx, (images, targets) in enumerate(
+        tqdm(loader, desc="Training", unit="batch")
+    ):
         try:
             images, targets = images.to(device), targets.to(device)
             optimizer.zero_grad()
@@ -49,7 +51,7 @@ def train_model(
             epoch_loss += loss.item()
         except RuntimeError as e:
             raise RuntimeError(f"Error in training batch {batch_idx}: {str(e)}")
-        
+
     return epoch_loss / num_batches
 
 
@@ -83,7 +85,9 @@ def eval_model(
     epoch_loss = 0.0
     num_batches = len(loader)
     with torch.no_grad():
-        for batch_idx, (images, targets) in enumerate(tqdm(loader, desc="Evaluating", unit='batch')):
+        for batch_idx, (images, targets) in enumerate(
+            tqdm(loader, desc="Evaluating", unit="batch")
+        ):
             try:
                 images, targets = images.to(device), targets.to(device)
                 outputs = model(images)
@@ -91,7 +95,7 @@ def eval_model(
                 epoch_loss += loss.item()
             except RuntimeError as e:
                 raise RuntimeError(f"Error in evaluation batch {batch_idx}: {str(e)}")
-            
+
     return epoch_loss / num_batches
 
 
@@ -125,12 +129,16 @@ def evaluate_metrics(
 
     model.eval()
     iou_metric = MulticlassJaccardIndex(num_classes=num_classes).to(device)
-    acc_metric = MulticlassAccuracy(num_classes=num_classes, average="weighted").to(device)
+    acc_metric = MulticlassAccuracy(num_classes=num_classes, average="weighted").to(
+        device
+    )
 
     iou_metric.reset()
     acc_metric.reset()
     with torch.no_grad():
-        for batch_idx, (images, targets) in enumerate(tqdm(loader, desc="Evaluating metrics", unit='batch')):
+        for batch_idx, (images, targets) in enumerate(
+            tqdm(loader, desc="Evaluating metrics", unit="batch")
+        ):
             try:
                 images, targets = images.to(device), targets.to(device)
                 outputs = model(images)
@@ -139,7 +147,7 @@ def evaluate_metrics(
                 acc_metric.update(predictions, targets)
             except RuntimeError as e:
                 raise RuntimeError(f"Error in metrics batch {batch_idx}: {str(e)}")
-            
+
     iou = iou_metric.compute().cpu().numpy()
     accuracy = acc_metric.compute().item()
 
@@ -153,7 +161,7 @@ class EarlyStopping:
         self,
         patience: int = 5,
         delta: float = 0.0,
-        mode: str = 'min',
+        mode: str = "min",
         save_path: Optional[str] = None,
     ) -> None:
         """Initialize the EarlyStopping module.
@@ -175,7 +183,7 @@ class EarlyStopping:
             raise ValueError("patience must be non-negative")
         if delta < 0:
             raise ValueError("delta must be non-negative")
-        if mode not in ['min', 'max']:
+        if mode not in ["min", "max"]:
             raise ValueError("mode must be 'min' or 'max'")
         if save_path is not None:
             save_dir = os.path.dirname(save_path)
@@ -207,12 +215,14 @@ class EarlyStopping:
         Raises:
             ValueError: If metric is not a finite number or model is invalid.
         """
-        if not isinstance(metric, (int, float)) or not torch.isfinite(torch.tensor(metric)):
+        if not isinstance(metric, (int, float)) or not torch.isfinite(
+            torch.tensor(metric)
+        ):
             raise ValueError("metric must be a finite number")
         if not isinstance(model, nn.Module):
             raise ValueError("model must be a torch.nn.Module instance")
 
-        score = -metric if self.mode == 'min' else metric
+        score = -metric if self.mode == "min" else metric
 
         if self.best_score is None:
             self.best_score = score
@@ -223,7 +233,7 @@ class EarlyStopping:
             self.counter += 1
             if self.counter >= self.patience:
                 self.early_stop = True
-            print(f'Early stopping triggered [{self.counter} / {self.patience}]')
+            print(f"Early stopping triggered [{self.counter} / {self.patience}]")
         else:
             self.best_score = score
             self.best_model_state = model.state_dict()
@@ -244,6 +254,6 @@ class EarlyStopping:
         """
         try:
             torch.save(model.state_dict(), self.save_path)
-            print(f'Saved model to {self.save_path}!!!')
+            print(f"Saved model to {self.save_path}!!!")
         except OSError as e:
             raise OSError(f"Failed to save model to {self.save_path}: {str(e)}")

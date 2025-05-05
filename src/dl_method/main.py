@@ -32,7 +32,7 @@ def load_config(config_path: str) -> dict:
     if not os.path.isfile(config_path):
         raise FileNotFoundError(f"Config file does not exist: {config_path}")
     try:
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             return yaml.safe_load(f)
     except yaml.YAMLError as e:
         raise yaml.YAMLError(f"Invalid YAML file: {str(e)}")
@@ -118,7 +118,10 @@ def train_and_evaluate(
     num_epochs: int,
     early_stopping: EarlyStopping = None,
     test_image_path: str = None,
-) -> Tuple[List[float], List[float], List[float], List[float], List[float], List[float]]:
+    result_dir: str = None,
+) -> Tuple[
+    List[float], List[float], List[float], List[float], List[float], List[float]
+]:
     """Train and evaluate the model, collecting metrics for each epoch.
 
     Args:
@@ -146,10 +149,16 @@ def train_and_evaluate(
         try:
             train_loss = train_model(model, train_loader, criterion, optimizer, device)
             val_loss = eval_model(model, val_loader, criterion, device)
-            train_iou, train_acc = evaluate_metrics(model, train_loader, num_classes=3, device=device)
-            val_iou, val_acc = evaluate_metrics(model, val_loader, num_classes=3, device=device)
+            train_iou, train_acc = evaluate_metrics(
+                model, train_loader, num_classes=3, device=device
+            )
+            val_iou, val_acc = evaluate_metrics(
+                model, val_loader, num_classes=3, device=device
+            )
         except RuntimeError as e:
-            raise RuntimeError(f"Training/evaluation failed at epoch {epoch + 1}: {str(e)}")
+            raise RuntimeError(
+                f"Training/evaluation failed at epoch {epoch + 1}: {str(e)}"
+            )
 
         # Store metrics
         train_losses.append(train_loss)
@@ -159,33 +168,39 @@ def train_and_evaluate(
         val_ious.append(val_iou)
         val_accs.append(val_acc)
 
-        print(f"\t-> Train Loss: {train_loss:.4f}, mIoU: {train_iou:.4f}, Acc: {train_acc:.4f}")
-        print(f"\t-> Val Loss: {val_loss:.4f}, mIoU: {val_iou:.4f}, Acc: {val_acc:.4f}")
-        print('#################################################################')
-
-        
-        ########################################
-        visualize_results(
-            model=model,
-            device=device,
-            new_image_paths=test_image_path
+        print(
+            f"\t-> Train Loss: {train_loss:.4f}, mIoU: {train_iou:.4f}, Acc: {train_acc:.4f}"
         )
+        print(f"\t-> Val Loss: {val_loss:.4f}, mIoU: {val_iou:.4f}, Acc: {val_acc:.4f}")
+        print("#################################################################")
+
         ########################################
-        
+        if test_image_path:
+            visualize_results(
+                model=model,
+                device=device,
+                new_image_paths=test_image_path,
+                results_dir=result_dir,
+                image_name=f"model_epoch_{epoch}",
+            )
+        ########################################
+
         # Check early stopping
         if early_stopping is not None and early_stopping(val_loss, model):
             print("Early stopping triggered")
             break
-        
+
     return train_losses, train_ious, train_accs, val_losses, val_ious, val_accs
 
 
 def visualize_results(
     model: nn.Module,
     device: torch.device,
-    val_dataset: SegmentationDataset=None,
-    new_image_paths: List[str]=None,
-    results_dir: str=None,
+    val_dataset: SegmentationDataset = None,
+    new_image_paths: List[str] = None,
+    results_dir: str = None,
+    dataset_name: str = "val",
+    image_name: str = "test_image",
 ) -> None:
     """Visualize segmentation results for validation dataset and new images.
 
@@ -202,17 +217,17 @@ def visualize_results(
         RuntimeError: If visualization fails (e.g., model inference issues).
     """
     if val_dataset is None and new_image_paths is None:
-        raise ValueError('Either dataset or image_paths must be provided.')
-    
+        raise ValueError("Either dataset or image_paths must be provided.")
+
     # Ensure results directory exists
     if results_dir:
-        os.makedirs(results_dir, exist_ok=True) 
+        os.makedirs(results_dir, exist_ok=True)
 
     # Visualize validation dataset predictions
     if val_dataset is not None:
         for i in range(len(val_dataset)):
             if results_dir:
-                save_path = os.path.join(results_dir, f"val_{i}.png")
+                save_path = os.path.join(results_dir, f"{dataset_name}_{i}.png")
             else:
                 save_path = None
             try:
@@ -224,13 +239,15 @@ def visualize_results(
                     save_path=save_path,
                 )
             except (FileNotFoundError, RuntimeError) as e:
-                raise RuntimeError(f"Failed to visualize validation image {i}: {str(e)}")
+                raise RuntimeError(
+                    f"Failed to visualize validation image {i}: {str(e)}"
+                )
 
     # Visualize new image segmentations
     if new_image_paths is not None:
         for i, image_path in enumerate(new_image_paths, 1):
             if results_dir:
-                save_path = os.path.join(results_dir, f"test_image_{i}.png")
+                save_path = os.path.join(results_dir, f"{image_name}_{i}.png")
             else:
                 save_path = None
             if not os.path.isfile(image_path):
@@ -244,7 +261,10 @@ def visualize_results(
                     save_path=save_path,
                 )
             except (FileNotFoundError, RuntimeError) as e:
-                raise RuntimeError(f"Failed to visualize new image {image_path}: {str(e)}")
+                raise RuntimeError(
+                    f"Failed to visualize new image {image_path}: {str(e)}"
+                )
+
 
 def inference_time(
     model: nn.Module,
@@ -263,7 +283,7 @@ def inference_time(
     """
     model.to(device)
     model.eval()
-    
+
     start = time.time()
     with torch.inference_mode():
         for image, _ in dataset:
@@ -273,8 +293,10 @@ def inference_time(
     end = time.time()
     total_time = end - start
     avg_time = total_time / len(dataset)
-    
+
     return avg_time
+
+
 def main() -> None:
     """Main function to train and evaluate a DeepLabV3+ model for semantic segmentation.
 
@@ -294,7 +316,9 @@ def main() -> None:
     # Configuration
     data_dir = config.get("data_dir", "datasets/spinach")
     test_images_dir = config.get("test_images_dir", "test_images")
-    test_image_paths = os.listdir(test_images_dir)
+    test_image_paths = [
+        os.path.join(test_images_dir, f) for f in os.listdir(test_images_dir)
+    ]
     results_dir = config.get("results_dir", "results/deeplabv3plus")
     models_dir = config.get("models_dir", "save/models")
     batch_size = config.get("batch_size", 4)
@@ -313,7 +337,7 @@ def main() -> None:
         os.makedirs(dir_path, exist_ok=True)
 
     # Setup device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Initialize model
     model = DeepLabV3Plus(in_channels=3, num_classes=num_classes).to(device)
@@ -342,20 +366,28 @@ def main() -> None:
         ignore_index=loss_config.get("ignore_index", None),
     )
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    early_stopping = EarlyStopping(**early_stopping, mode='min', save_path=model_path)
+    early_stopping = EarlyStopping(**early_stopping, mode="min", save_path=model_path)
 
     # Train and evaluate
     if len(test_image_paths) > 0:
         test_image_path = [test_image_paths[0]]
-    train_losses, train_ious, train_accs, val_losses, val_ious, val_accs = train_and_evaluate(
-        model, train_loader, val_loader, 
-        criterion, optimizer, device, 
-        num_epochs, early_stopping, test_image_path
+    train_losses, train_ious, train_accs, val_losses, val_ious, val_accs = (
+        train_and_evaluate(
+            model,
+            train_loader,
+            val_loader,
+            criterion,
+            optimizer,
+            device,
+            num_epochs,
+            early_stopping,
+            test_image_path,
+        )
     )
 
     # Visualize training process
-    print('###############################################')
-    print('Training log:')
+    print("###############################################")
+    print("Training log:")
     visualize_train_process(
         train_losses,
         train_ious,
@@ -371,17 +403,18 @@ def main() -> None:
         model.load_state_dict(early_stopping.best_model_state)
     else:
         torch.save(model.state_dict(), model_path)
-        print(f'Model is saved to {model_path}.')
+        print(f"Model is saved to {model_path}.")
 
     # Visualize results
-    print('###############################################')
-    print('Testing segmentation:')
+    print("###############################################")
+    print("Testing segmentation:")
     visualize_results(model, device, val_loader.dataset, test_image_paths, results_dir)
-    
+
     # Compute inference time
-    print('###############################################')
+    print("###############################################")
     avg_time = inference_time(model, train_loader.dataset, device)
-    print(f'Average inference time: {avg_time} seconds.')
+    print(f"Average inference time: {avg_time} seconds.")
+
 
 if __name__ == "__main__":
     main()

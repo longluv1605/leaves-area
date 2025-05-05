@@ -28,7 +28,7 @@ class AtrousConvBlock(nn.Module):
             kernel_size=3,
             padding=atrous_rate,
             dilation=atrous_rate,
-            bias=False
+            bias=False,
         )
         self.bn = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU()
@@ -48,7 +48,9 @@ class AtrousConvBlock(nn.Module):
 class ASPP(nn.Module):
     """Atrous Spatial Pyramid Pooling (ASPP) module for multi-scale feature extraction."""
 
-    def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.5) -> None:
+    def __init__(
+        self, in_channels: int, out_channels: int, dropout: float = 0.5
+    ) -> None:
         """Initialize the ASPP module.
 
         Args:
@@ -67,7 +69,7 @@ class ASPP(nn.Module):
         self.branch1 = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         # 3x3 Convolution branches with different atrous rates
@@ -80,7 +82,7 @@ class ASPP(nn.Module):
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         # Output convolution
@@ -88,7 +90,7 @@ class ASPP(nn.Module):
             nn.Conv2d(out_channels * 5, out_channels, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(),
-            nn.Dropout(dropout)
+            nn.Dropout(dropout),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -111,7 +113,7 @@ class ASPP(nn.Module):
         self.gap.eval()  # <- this line fixes the issue
         with torch.no_grad():
             out5 = self.gap(x)
-        out5 = F.interpolate(out5, size=size, mode='bilinear', align_corners=True)     
+        out5 = F.interpolate(out5, size=size, mode="bilinear", align_corners=True)
 
         # Concatenate and process outputs
         merged = torch.cat([out1, out2, out3, out4, out5], dim=1)
@@ -121,7 +123,9 @@ class ASPP(nn.Module):
 class DeepLabV3Decoder(nn.Module):
     """Decoder module for DeepLabV3+ combining low-level and ASPP features."""
 
-    def __init__(self, low_level_in_channels: int, aspp_out_channels: int, num_classes: int) -> None:
+    def __init__(
+        self, low_level_in_channels: int, aspp_out_channels: int, num_classes: int
+    ) -> None:
         """Initialize the DeepLabV3Decoder.
 
         Args:
@@ -140,7 +144,7 @@ class DeepLabV3Decoder(nn.Module):
         self.low_level_reduce = nn.Sequential(
             nn.Conv2d(low_level_in_channels, 48, kernel_size=1, bias=False),
             nn.BatchNorm2d(48),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         # Decoder layers
@@ -151,10 +155,12 @@ class DeepLabV3Decoder(nn.Module):
             nn.Conv2d(256, 256, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(256),
             nn.ReLU(),
-            nn.Conv2d(256, num_classes, kernel_size=1)
+            nn.Conv2d(256, num_classes, kernel_size=1),
         )
 
-    def forward(self, aspp_out: torch.Tensor, low_level_features: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, aspp_out: torch.Tensor, low_level_features: torch.Tensor
+    ) -> torch.Tensor:
         """Combine ASPP and low-level features to produce segmentation output.
 
         Args:
@@ -169,8 +175,8 @@ class DeepLabV3Decoder(nn.Module):
         aspp_out = F.interpolate(
             aspp_out,
             size=low_level_features.shape[2:],
-            mode='bilinear',
-            align_corners=True
+            mode="bilinear",
+            align_corners=True,
         )
         merged = torch.cat([low_level_features, aspp_out], dim=1)
         return self.decoder(merged)
@@ -179,7 +185,9 @@ class DeepLabV3Decoder(nn.Module):
 class ResNetBackbone(nn.Module):
     """ResNet101 backbone modified for DeepLabV3+ with atrous convolutions."""
 
-    def __init__(self, weights: Optional[ResNet101_Weights] = ResNet101_Weights.IMAGENET1K_V1) -> None:
+    def __init__(
+        self, weights: Optional[ResNet101_Weights] = ResNet101_Weights.IMAGENET1K_V1
+    ) -> None:
         """Initialize the ResNet101 backbone.
 
         Args:
@@ -192,10 +200,7 @@ class ResNetBackbone(nn.Module):
         self.high_level_channels = 2048
 
         self.layer0 = nn.Sequential(
-            resnet.conv1,
-            resnet.bn1,
-            resnet.relu,
-            resnet.maxpool
+            resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool
         )
         self.layer1 = resnet.layer1
         self.layer2 = resnet.layer2
@@ -204,11 +209,11 @@ class ResNetBackbone(nn.Module):
 
         # Modify layer4 for atrous convolution
         for name, module in self.layer4.named_modules():
-            if 'conv2' in name:
+            if "conv2" in name:
                 module.dilation = (2, 2)
                 module.padding = (2, 2)
                 module.stride = (1, 1)
-            elif 'downsample.0' in name:
+            elif "downsample.0" in name:
                 module.stride = (1, 1)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -249,7 +254,9 @@ class DeepLabV3Plus(nn.Module):
 
         self.backbone = ResNetBackbone()
         self.aspp = ASPP(self.backbone.high_level_channels, 256)
-        self.decoder = DeepLabV3Decoder(self.backbone.low_level_channels, 256, num_classes)
+        self.decoder = DeepLabV3Decoder(
+            self.backbone.low_level_channels, 256, num_classes
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Perform semantic segmentation on the input.
@@ -264,4 +271,6 @@ class DeepLabV3Plus(nn.Module):
         high_level_features, low_level_features = self.backbone(x)
         aspp_out = self.aspp(high_level_features)
         decoder_out = self.decoder(aspp_out, low_level_features)
-        return F.interpolate(decoder_out, size=size, mode='bilinear', align_corners=True)
+        return F.interpolate(
+            decoder_out, size=size, mode="bilinear", align_corners=True
+        )

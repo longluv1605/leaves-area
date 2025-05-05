@@ -10,7 +10,9 @@ from albumentations.pytorch import ToTensorV2
 class SegmentationDataset(Dataset):
     """Custom dataset for semantic segmentation, loading images and masks from directories."""
 
-    def __init__(self, image_dir: str, mask_dir: str, transform: Optional[A.Compose] = None) -> None:
+    def __init__(
+        self, image_dir: str, mask_dir: str, transform: Optional[A.Compose] = None
+    ) -> None:
         """Initialize the dataset with image and mask directories.
 
         Args:
@@ -24,31 +26,45 @@ class SegmentationDataset(Dataset):
             FileNotFoundError: If no valid image or mask files are found.
         """
         if not os.path.isdir(image_dir) or not os.path.isdir(mask_dir):
-            raise ValueError(f"Invalid directory path: image_dir={image_dir}, mask_dir={mask_dir}")
+            raise ValueError(
+                f"Invalid directory path: image_dir={image_dir}, mask_dir={mask_dir}"
+            )
 
         # Collect image and mask paths
-        valid_extensions = {'.jpg', '.jpeg', '.png', '.bmp'}
-        self.image_paths: List[str] = sorted([
-            os.path.join(image_dir, f) for f in os.listdir(image_dir)
-            if os.path.splitext(f)[1].lower() in valid_extensions
-        ])
-        self.mask_paths: List[str] = sorted([
-            os.path.join(mask_dir, f) for f in os.listdir(mask_dir)
-            if os.path.splitext(f)[1].lower() in valid_extensions
-        ])
+        valid_extensions = {".jpg", ".jpeg", ".png", ".bmp"}
+        self.image_paths: List[str] = sorted(
+            [
+                os.path.join(image_dir, f)
+                for f in os.listdir(image_dir)
+                if os.path.splitext(f)[1].lower() in valid_extensions
+            ]
+        )
+        self.mask_paths: List[str] = sorted(
+            [
+                os.path.join(mask_dir, f)
+                for f in os.listdir(mask_dir)
+                if os.path.splitext(f)[1].lower() in valid_extensions
+            ]
+        )
 
         if not self.image_paths or not self.mask_paths:
-            raise FileNotFoundError("No valid images or masks found in the specified directories")
+            raise FileNotFoundError(
+                "No valid images or masks found in the specified directories"
+            )
         if len(self.image_paths) != len(self.mask_paths):
-            raise ValueError(f"Mismatch between number of images ({len(self.image_paths)}) "
-                             f"and masks ({len(self.mask_paths)})")
+            raise ValueError(
+                f"Mismatch between number of images ({len(self.image_paths)}) "
+                f"and masks ({len(self.mask_paths)})"
+            )
 
         # Validate file name consistency (optional, assuming paired files have same base names)
         for img_path, mask_path in zip(self.image_paths, self.mask_paths):
             img_name = os.path.splitext(os.path.basename(img_path))[0]
             mask_name = os.path.splitext(os.path.basename(mask_path))[0]
-            if img_name != mask_name.split('_mask')[0]:
-                raise ValueError(f"Mismatched image and mask names: {img_name} vs {mask_name}")
+            if img_name != mask_name.split("_mask")[0]:
+                raise ValueError(
+                    f"Mismatched image and mask names: {img_name} vs {mask_name}"
+                )
 
         self.transform = transform
 
@@ -76,7 +92,9 @@ class SegmentationDataset(Dataset):
             ValueError: If the image or mask is invalid (e.g., empty or corrupted).
         """
         if not 0 <= idx < len(self.image_paths):
-            raise IndexError(f"Index {idx} out of range for dataset of size {len(self.image_paths)}")
+            raise IndexError(
+                f"Index {idx} out of range for dataset of size {len(self.image_paths)}"
+            )
 
         image_path = self.image_paths[idx]
         mask_path = self.mask_paths[idx]
@@ -84,18 +102,22 @@ class SegmentationDataset(Dataset):
         # Load image and mask
         image = cv2.imread(image_path)
         if image is None or image.size == 0:
-            raise FileNotFoundError(f"Failed to load image or image is empty: {image_path}")
+            raise FileNotFoundError(
+                f"Failed to load image or image is empty: {image_path}"
+            )
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
         if mask is None or mask.size == 0:
-            raise FileNotFoundError(f"Failed to load mask or mask is empty: {mask_path}")
+            raise FileNotFoundError(
+                f"Failed to load mask or mask is empty: {mask_path}"
+            )
 
         # Apply transformations
         if self.transform is not None:
             augmented = self.transform(image=image, mask=mask)
-            image = augmented['image']  # Tensor of shape (C, H, W)
-            mask = augmented['mask']    # Tensor of shape (H, W)
+            image = augmented["image"]  # Tensor of shape (C, H, W)
+            mask = augmented["mask"]  # Tensor of shape (H, W)
         else:
             image = torch.from_numpy(image).permute(2, 0, 1)
             mask = torch.from_numpy(mask)
@@ -139,7 +161,12 @@ def get_transforms(config: Optional[Dict[str, Any]] = None) -> A.Compose:
         default_config.update(config)
 
     # Validate probabilities
-    for prob_key in ["horizontal_flip_p", "random_rotate_p", "elastic_transform_p", "grid_distortion_p"]:
+    for prob_key in [
+        "horizontal_flip_p",
+        "random_rotate_p",
+        "elastic_transform_p",
+        "grid_distortion_p",
+    ]:
         prob = default_config[prob_key]
         if not isinstance(prob, (int, float)) or not 0 <= prob <= 1:
             raise ValueError(f"{prob_key} must be a number between 0 and 1, got {prob}")
@@ -149,7 +176,11 @@ def get_transforms(config: Optional[Dict[str, Any]] = None) -> A.Compose:
         if key not in default_config:
             continue
         values = default_config[key]
-        if not isinstance(values, list) or len(values) != 3 or any(not isinstance(v, (int, float)) for v in values):
+        if (
+            not isinstance(values, list)
+            or len(values) != 3
+            or any(not isinstance(v, (int, float)) for v in values)
+        ):
             raise ValueError(f"{key} must be a list of three numbers, got {values}")
 
     # Compose transforms

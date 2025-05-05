@@ -49,39 +49,41 @@ def visualize_train_process(
 
     # Compute mean IoU per epoch (handle both scalar and array inputs)
     train_iou_means = [
-        float(iou.mean()) if isinstance(iou, np.ndarray) else float(iou) for iou in train_ious
+        float(iou.mean()) if isinstance(iou, np.ndarray) else float(iou)
+        for iou in train_ious
     ]
     val_iou_means = [
-        float(iou.mean()) if isinstance(iou, np.ndarray) else float(iou) for iou in val_ious
+        float(iou.mean()) if isinstance(iou, np.ndarray) else float(iou)
+        for iou in val_ious
     ]
 
     # Create subplots
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
     # Loss plot
-    axes[0].plot(epochs, train_losses, '-o', label='Train Loss')
-    axes[0].plot(epochs, val_losses, '-o', label='Val Loss')
-    axes[0].set_title('Loss')
-    axes[0].set_xlabel('Epoch')
-    axes[0].set_ylabel('Loss')
+    axes[0].plot(epochs, train_losses, "-o", label="Train Loss")
+    axes[0].plot(epochs, val_losses, "-o", label="Val Loss")
+    axes[0].set_title("Loss")
+    axes[0].set_xlabel("Epoch")
+    axes[0].set_ylabel("Loss")
     axes[0].legend()
     axes[0].grid(True)
 
     # mIoU plot
-    axes[1].plot(epochs, train_iou_means, '-o', label='Train mIoU')
-    axes[1].plot(epochs, val_iou_means, '-o', label='Val mIoU')
-    axes[1].set_title('Mean IoU')
-    axes[1].set_xlabel('Epoch')
-    axes[1].set_ylabel('mIoU')
+    axes[1].plot(epochs, train_iou_means, "-o", label="Train mIoU")
+    axes[1].plot(epochs, val_iou_means, "-o", label="Val mIoU")
+    axes[1].set_title("Mean IoU")
+    axes[1].set_xlabel("Epoch")
+    axes[1].set_ylabel("mIoU")
     axes[1].legend()
     axes[1].grid(True)
 
     # Accuracy plot
-    axes[2].plot(epochs, train_accs, '-o', label='Train Acc')
-    axes[2].plot(epochs, val_accs, '-o', label='Val Acc')
-    axes[2].set_title('Accuracy')
-    axes[2].set_xlabel('Epoch')
-    axes[2].set_ylabel('Accuracy')
+    axes[2].plot(epochs, train_accs, "-o", label="Train Acc")
+    axes[2].plot(epochs, val_accs, "-o", label="Val Acc")
+    axes[2].set_title("Accuracy")
+    axes[2].set_xlabel("Epoch")
+    axes[2].set_ylabel("Accuracy")
     axes[2].legend()
     axes[2].grid(True)
 
@@ -91,7 +93,7 @@ def visualize_train_process(
     # Save or display plot
     if save_path:
         try:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            plt.savefig(save_path, dpi=300, bbox_inches="tight")
         except OSError as e:
             raise OSError(f"Failed to save plot to {save_path}: {str(e)}")
     else:
@@ -99,6 +101,7 @@ def visualize_train_process(
 
     # Close figure to prevent memory leaks
     # plt.close(fig)
+
 
 def show_images(
     image: np.ndarray,
@@ -125,7 +128,9 @@ def show_images(
         raise ValueError("image must be an RGB array of shape (height, width, 3)")
     if not isinstance(pred_mask, np.ndarray) or pred_mask.ndim != 2:
         raise ValueError("pred_mask must be a 2D array of shape (height, width)")
-    if true_mask is not None and (not isinstance(true_mask, np.ndarray) or true_mask.ndim != 2):
+    if true_mask is not None and (
+        not isinstance(true_mask, np.ndarray) or true_mask.ndim != 2
+    ):
         raise ValueError("true_mask must be a 2D array of shape (height, width)")
     if true_mask is not None and true_mask.shape != pred_mask.shape:
         raise ValueError("true_mask and pred_mask must have the same shape")
@@ -142,19 +147,19 @@ def show_images(
 
     # Plot true mask if provided
     if true_mask is not None:
-        axes[1].imshow(true_mask, cmap='nipy_spectral')
+        axes[1].imshow(true_mask, cmap="nipy_spectral")
         axes[1].set_title("Ground Truth")
         pred_ax = axes[2]
     else:
         pred_ax = axes[1]
 
     # Plot predicted mask
-    pred_ax.imshow(pred_mask, cmap='nipy_spectral')
+    pred_ax.imshow(pred_mask, cmap="nipy_spectral")
     pred_ax.set_title("Prediction")
 
     # Remove axes
     for ax in axes:
-        ax.axis('off')
+        ax.axis("off")
 
     # Adjust layout
     plt.tight_layout()
@@ -162,7 +167,7 @@ def show_images(
     # Save or display plot
     if save_path:
         try:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            plt.savefig(save_path, dpi=300, bbox_inches="tight")
         except OSError as e:
             raise OSError(f"Failed to save plot to {save_path}: {str(e)}")
     else:
@@ -214,19 +219,26 @@ def visualize_segmentation(
         raise ValueError("model must be a torch.nn.Module instance")
     if not isinstance(device, torch.device):
         raise ValueError("device must be a torch.device instance")
-    if resize_shape is not None and (not isinstance(resize_shape, tuple) or len(resize_shape) != 2 or
-                                    any(s <= 0 for s in resize_shape)):
-        raise ValueError("resize_shape must be a tuple of two positive integers (height, width)")
+    if resize_shape is not None and (
+        not isinstance(resize_shape, tuple)
+        or len(resize_shape) != 2
+        or any(s <= 0 for s in resize_shape)
+    ):
+        raise ValueError(
+            "resize_shape must be a tuple of two positive integers (height, width)"
+        )
 
     model.eval()
     model.to(device)
 
     if dataset is not None:
         # Validate dataset and index
-        if not hasattr(dataset, 'image_paths') or not hasattr(dataset, 'mask_paths'):
+        if not hasattr(dataset, "image_paths") or not hasattr(dataset, "mask_paths"):
             raise ValueError("dataset must have image_paths and mask_paths attributes")
         if not (0 <= idx < len(dataset.image_paths)):
-            raise ValueError(f"idx must be between 0 and {len(dataset.image_paths) - 1}")
+            raise ValueError(
+                f"idx must be between 0 and {len(dataset.image_paths) - 1}"
+            )
 
         # Load image and true mask
         image = cv2.imread(dataset.image_paths[idx])

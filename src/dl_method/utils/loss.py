@@ -28,7 +28,9 @@ class DiceLoss(nn.Module):
         if smooth < 0:
             raise ValueError(f"smooth must be non-negative, got {smooth}")
         if ignore_index is not None and not isinstance(ignore_index, int):
-            raise ValueError(f"ignore_index must be an integer or None, got {ignore_index}")
+            raise ValueError(
+                f"ignore_index must be an integer or None, got {ignore_index}"
+            )
 
         self.smooth = smooth
         self.from_logits = from_logits
@@ -52,12 +54,16 @@ class DiceLoss(nn.Module):
         """
         # Validate input shapes
         if inputs.dim() != 4 or targets.dim() != 3:
-            raise ValueError(f"Expected inputs of shape (batch_size, num_classes, height, width) "
-                             f"and targets of shape (batch_size, height, width), but got {inputs.shape} "
-                             f"and {targets.shape}")
+            raise ValueError(
+                f"Expected inputs of shape (batch_size, num_classes, height, width) "
+                f"and targets of shape (batch_size, height, width), but got {inputs.shape} "
+                f"and {targets.shape}"
+            )
         if inputs.shape[0] != targets.shape[0] or inputs.shape[2:] != targets.shape[1:]:
-            raise ValueError(f"Batch size and spatial dimensions must match: "
-                             f"inputs {inputs.shape}, targets {targets.shape}")
+            raise ValueError(
+                f"Batch size and spatial dimensions must match: "
+                f"inputs {inputs.shape}, targets {targets.shape}"
+            )
 
         # Apply softmax if inputs are logits
         if self.from_logits:
@@ -79,7 +85,9 @@ class DiceLoss(nn.Module):
 
         # Flatten spatial dimensions
         inputs_flat = inputs.contiguous().view(inputs.shape[0], num_classes, -1)
-        targets_flat = targets_onehot.contiguous().view(targets_onehot.shape[0], num_classes, -1)
+        targets_flat = targets_onehot.contiguous().view(
+            targets_onehot.shape[0], num_classes, -1
+        )
 
         # Compute intersection and union
         intersection = (inputs_flat * targets_flat).sum(-1)
@@ -87,7 +95,9 @@ class DiceLoss(nn.Module):
 
         # Check for numerical stability
         if torch.any(union <= self.smooth):
-            raise RuntimeError("Union is too small, causing numerical instability in Dice loss")
+            raise RuntimeError(
+                "Union is too small, causing numerical instability in Dice loss"
+            )
 
         # Compute Dice score and loss
         dice = (2 * intersection + self.smooth) / union
@@ -124,17 +134,30 @@ class DiceCELoss(nn.Module):
         super().__init__()
         if smooth < 0:
             raise ValueError(f"smooth must be non-negative, got {smooth}")
-        if class_weights is not None and (class_weights.dim() != 1 or any(w < 0 for w in class_weights)):
-            raise ValueError(f"class_weights must be a 1D tensor with non-negative values, got {class_weights}")
+        if class_weights is not None and (
+            class_weights.dim() != 1 or any(w < 0 for w in class_weights)
+        ):
+            raise ValueError(
+                f"class_weights must be a 1D tensor with non-negative values, got {class_weights}"
+            )
         if not isinstance(dice_ce_weights, (tuple, list)) or len(dice_ce_weights) != 2:
-            raise ValueError(f"dice_ce_weights must be a tuple of two floats, got {dice_ce_weights}")
+            raise ValueError(
+                f"dice_ce_weights must be a tuple of two floats, got {dice_ce_weights}"
+            )
         if any(w < 0 for w in dice_ce_weights):
-            raise ValueError(f"dice_ce_weights must be non-negative, got {dice_ce_weights}")
+            raise ValueError(
+                f"dice_ce_weights must be non-negative, got {dice_ce_weights}"
+            )
         if sum(dice_ce_weights) <= 0:
-            raise ValueError(f"Sum of dice_ce_weights must be positive, got {sum(dice_ce_weights)}")
+            raise ValueError(
+                f"Sum of dice_ce_weights must be positive, got {sum(dice_ce_weights)}"
+            )
 
         self.dice = DiceLoss(smooth=smooth, from_logits=True, ignore_index=ignore_index)
-        self.ce = nn.CrossEntropyLoss(weight=class_weights, ignore_index=ignore_index if ignore_index is not None else -100)
+        self.ce = nn.CrossEntropyLoss(
+            weight=class_weights,
+            ignore_index=ignore_index if ignore_index is not None else -100,
+        )
         self.dice_weight, self.ce_weight = dice_ce_weights
 
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
@@ -155,12 +178,16 @@ class DiceCELoss(nn.Module):
         """
         # Validate input shapes
         if inputs.dim() != 4 or targets.dim() != 3:
-            raise ValueError(f"Expected inputs of shape (batch_size, num_classes, height, width) "
-                             f"and targets of shape (batch_size, height, width), but got {inputs.shape} "
-                             f"and {targets.shape}")
+            raise ValueError(
+                f"Expected inputs of shape (batch_size, num_classes, height, width) "
+                f"and targets of shape (batch_size, height, width), but got {inputs.shape} "
+                f"and {targets.shape}"
+            )
         if inputs.shape[0] != targets.shape[0] or inputs.shape[2:] != targets.shape[1:]:
-            raise ValueError(f"Batch size and spatial dimensions must match: "
-                             f"inputs {inputs.shape}, targets {targets.shape}")
+            raise ValueError(
+                f"Batch size and spatial dimensions must match: "
+                f"inputs {inputs.shape}, targets {targets.shape}"
+            )
 
         dice_loss = self.dice(inputs, targets)
         ce_loss = self.ce(inputs, targets)
