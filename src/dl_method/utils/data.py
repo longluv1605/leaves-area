@@ -97,10 +97,10 @@ class SegmentationDataset(Dataset):
             image = augmented['image']  # Tensor of shape (C, H, W)
             mask = augmented['mask']    # Tensor of shape (H, W)
         else:
-            image = torch.from_numpy(image).permute(2, 0, 1).float()
-            mask = torch.from_numpy(mask).long()
+            image = torch.from_numpy(image).permute(2, 0, 1)
+            mask = torch.from_numpy(mask)
 
-        return image, mask.long()
+        return image.float(), mask.long()
 
 
 def get_transforms(config: Optional[Dict[str, Any]] = None) -> A.Compose:
