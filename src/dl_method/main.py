@@ -181,8 +181,8 @@ def train_and_evaluate(
 def visualize_results(
     model: nn.Module,
     device: torch.device,
-    val_dataset: SegmentationDataset,
-    new_image_paths: List[str],
+    val_dataset: SegmentationDataset=None,
+    new_image_paths: List[str]=None,
     results_dir: str=None,
 ) -> None:
     """Visualize segmentation results for validation dataset and new images.
