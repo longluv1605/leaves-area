@@ -195,48 +195,54 @@ def visualize_results(
         results_dir (str): Directory to save visualization results.
 
     Raises:
+        ValueError: If nothing to show.
         FileNotFoundError: If image paths or results_dir are invalid.
         RuntimeError: If visualization fails (e.g., model inference issues).
     """
+    if val_dataset is None and new_image_paths is None:
+        raise ValueError('There is no dataset and image paths.')
+    
     # Ensure results directory exists
     if results_dir:
         os.makedirs(results_dir, exist_ok=True) 
 
     # Visualize validation dataset predictions
-    for i in range(len(val_dataset)):
-        if results_dir:
-            save_path = os.path.join(results_dir, f"val_{i}.png")
-        else:
-            save_path = None
-        try:
-            visualize_segmentation(
-                model=model,
-                device=device,
-                dataset=val_dataset,
-                idx=i,
-                save_path=save_path,
-            )
-        except (FileNotFoundError, RuntimeError) as e:
-            raise RuntimeError(f"Failed to visualize validation image {i}: {str(e)}")
+    if val_dataset is not None:
+        for i in range(len(val_dataset)):
+            if results_dir:
+                save_path = os.path.join(results_dir, f"val_{i}.png")
+            else:
+                save_path = None
+            try:
+                visualize_segmentation(
+                    model=model,
+                    device=device,
+                    dataset=val_dataset,
+                    idx=i,
+                    save_path=save_path,
+                )
+            except (FileNotFoundError, RuntimeError) as e:
+                raise RuntimeError(f"Failed to visualize validation image {i}: {str(e)}")
 
     # Visualize new image segmentations
-    for i, image_path in enumerate(new_image_paths, 1):
-        if results_dir:
-            save_path = os.path.join(results_dir, f"new_image_{i}.png")
-        else:
-            save_path = None
-        if not os.path.isfile(image_path):
-            raise FileNotFoundError(f"Image does not exist: {image_path}")
-        try:
-            visualize_segmentation(
-                model=model,
-                device=device,
-                image_path=image_path,
-                resize_shape=(640, 640),
-                save_path=save_path,
-            )
-        except (FileNotFoundError, RuntimeError) as e:
-            raise RuntimeError(f"Failed to visualize new image {image_path}: {str(e)}")
+    if new_image_paths is not None:
+        for i, image_path in enumerate(new_image_paths, 1):
+            if results_dir:
+                save_path = os.path.join(results_dir, f"new_image_{i}.png")
+            else:
+                save_path = None
+            if not os.path.isfile(image_path):
+                raise FileNotFoundError(f"Image does not exist: {image_path}")
+            try:
+                visualize_segmentation(
+                    model=model,
+                    device=device,
+                    image_path=image_path,
+                    resize_shape=(640, 640),
+                    save_path=save_path,
+                )
+            except (FileNotFoundError, RuntimeError) as e:
+                raise RuntimeError(f"Failed to visualize new image {image_path}: {str(e)}")
 
 def inference_time(
     model: nn.Module,
