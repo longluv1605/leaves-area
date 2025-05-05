@@ -118,7 +118,7 @@ def train_and_evaluate(
     num_epochs: int,
     early_stopping: EarlyStopping = None,
     test_image_path: str = None,
-    result_dir: str = None,
+    results_dir: str = None,
 ) -> Tuple[
     List[float], List[float], List[float], List[float], List[float], List[float]
 ]:
@@ -180,7 +180,7 @@ def train_and_evaluate(
                 model=model,
                 device=device,
                 new_image_paths=test_image_path,
-                results_dir=result_dir,
+                results_dir=results_dir,
                 image_name=f"model_epoch_{epoch}",
             )
         ########################################
@@ -382,12 +382,11 @@ def main() -> None:
             num_epochs,
             early_stopping,
             test_image_path,
+            results_dir,
         )
     )
 
     # Visualize training process
-    print("###############################################")
-    print("Training log:")
     visualize_train_process(
         train_losses,
         train_ious,
@@ -406,12 +405,11 @@ def main() -> None:
         print(f"Model is saved to {model_path}.")
 
     # Visualize results
-    print("###############################################")
-    print("Testing segmentation:")
     visualize_results(model, device, val_loader.dataset, test_image_paths, results_dir)
 
     # Compute inference time
-    print("###############################################")
+    print("#################################################################")
+    print("#################################################################")
     avg_time = inference_time(model, train_loader.dataset, device)
     print(f"Average inference time: {avg_time} seconds.")
 

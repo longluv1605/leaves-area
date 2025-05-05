@@ -91,7 +91,7 @@ def visualize_train_process(
     plt.tight_layout()
 
     # Save or display plot
-    if save_path:
+    if save_path is not None:
         try:
             plt.savefig(save_path, dpi=300, bbox_inches="tight")
         except OSError as e:
@@ -100,7 +100,7 @@ def visualize_train_process(
         plt.show()
 
     # Close figure to prevent memory leaks
-    # plt.close(fig)
+    plt.close(fig)
 
 
 def show_images(
@@ -165,7 +165,7 @@ def show_images(
     plt.tight_layout()
 
     # Save or display plot
-    if save_path:
+    if save_path is not None:
         try:
             plt.savefig(save_path, dpi=300, bbox_inches="tight")
         except OSError as e:
@@ -174,7 +174,7 @@ def show_images(
         plt.show()
 
     # Close figure to prevent memory leaks
-    # plt.close(fig)
+    plt.close(fig)
 
 
 def visualize_segmentation(
