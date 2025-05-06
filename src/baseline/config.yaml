@@ -26,6 +26,6 @@ CONFIG:
 RESULTS:
     save_dir: ./results/baseline
     image_paths:
-        - images/im1.jpg
-        - images/im2.jpg
-        - images/im3.jpg
+        - test_images/im1.jpg
+        - test_images/im2.jpg
+        - test_images/im3.jpg

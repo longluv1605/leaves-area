@@ -42,6 +42,7 @@ def main() -> None:
                 save_path=str(save_path)
             )
             print(f"Processed and saved result for {image_name} to {save_path}")
+            print(f"###########################################################")
         except (FileNotFoundError, ValueError) as e:
             print(f"Error processing {image_name}: {e}")
 

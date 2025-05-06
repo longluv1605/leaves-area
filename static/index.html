@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaf Area Calculator</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Leaf Area Calculator</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" id="image-upload" name="file" accept="image/jpeg,image/png" required>
+        <button type="submit">Upload Image</button>
+    </form>
+    <div>
+        <h2>Input Image</h2>
+        <img id="input-image" alt="Input Image">
+    </div>
+    <div>
+        <h2>Segmentation Mask</h2>
+        <img id="mask-image" alt="Segmentation Mask">
+    </div>
+    <p>Area: <span id="area"></span></p>
+
+    <script>
+        document.getElementById("upload-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            try {
+                const response = await fetch("/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                document.getElementById("input-image").src = data.image_url;
+                document.getElementById("mask-image").src = data.mask_url;
+                document.getElementById("area").innerText = `${data.area.toFixed(2)} mm2`;
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed to process image. Please try again.");
+            }
+        });
+    </script>
+</body>
+</html>

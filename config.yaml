@@ -1,0 +1,21 @@
+# Configuration file for the image segmentation and area calculation project
+
+# Model settings
+model:
+  checkpoint_path: "save/models/main_model.pth"  # Path to DEEPLABV3PLUS model checkpoint
+  device: "cuda_if_available"             # Device: cuda_if_available, cuda, cpu
+
+# Server settings
+server:
+  host: "localhost"                         # FastAPI server host
+  port: 8080                              # FastAPI server port
+  reload: true                            # Enable auto-reload in development
+
+# File storage settings
+storage:
+  upload_dir: "uploads"                   # Directory for uploaded images
+  max_file_size_mb: 10                    # Max file size in MB
+
+# Segmentation settings
+segmentation:
+  coin_diameter_mm: 21.25                 # Reference coin diameter in mm
