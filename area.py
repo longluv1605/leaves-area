@@ -2,9 +2,10 @@ import os
 import numpy as np
 import torch
 import cv2
+import gdown
 from src.dl_method.models.deeplab import DeepLabV3Plus
 
-def load_model(model_path: str) -> torch.nn.Module:
+def load_model(model_path: str=None, gg_id: str=None) -> torch.nn.Module:
     """Load a segmentation model from the specified path.
 
     Args:
@@ -16,8 +17,13 @@ def load_model(model_path: str) -> torch.nn.Module:
     Raises:
         FileNotFoundError: If the model file does not exist.
     """
+    if (model_path is None and gg_id is None) or model_path is None:
+        raise ValueError("Require model_path and/or gg_id")
     if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model file {model_path} not found")
+        if gg_id is None:
+            raise FileNotFoundError(f"Model file {model_path} not found")
+        gdown.download(f"https://drive.google.com/uc?id={gg_id}", model_path, quiet=False)
+
     model = DeepLabV3Plus(in_channels=3, num_classes=3)
     model.load_state_dict(torch.load(model_path))
     return model

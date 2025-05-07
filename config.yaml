@@ -2,8 +2,10 @@
 
 # Model settings
 model:
-  checkpoint_path: "save/models/main_model.pth"  # Path to DEEPLABV3PLUS model checkpoint
-  device: "cuda_if_available"             # Device: cuda_if_available, cuda, cpu
+  model_path: "save/models/main_model.pth"  # Path to DEEPLABV3PLUS model checkpoint
+  gg_id: "1BsKnEt80IwCyRRHXjFpVpk6kn7iGtr0L"
+
+device: "cuda_if_available"             # Device: cuda_if_available, cuda, cpu
 
 # Server settings
 server:

@@ -9,9 +9,12 @@ import uuid
 from area import load_model, prepare_image, get_mask, compute_leaves_area
 
 @st.cache_resource
-def load_cached_model(checkpoint_path: str) -> torch.nn.Module:
+def load_cached_model(model_config: dict) -> torch.nn.Module:
     """Load and cache DeepLabv3+ model."""
-    return load_model(checkpoint_path)
+    try: 
+        return load_model(**model_config)
+    except:
+        raise FileNotFoundError("Cannot load model!")
 
 def load_config(config_path: str = "config.yaml") -> dict:
     """Load configuration from YAML file.
@@ -158,6 +161,7 @@ def main():
         return
     
     model_config = config["model"]
+    device_config = config["device"]
     storage_config = config["storage"]
     segmentation_config = config["segmentation"]
     
@@ -165,11 +169,11 @@ def main():
     setup_storage(storage_config["upload_dir"])
     
     # Determine device
-    device = "cuda" if torch.cuda.is_available() and model_config["device"] == "cuda_if_available" else "cpu"
+    device = "cuda" if torch.cuda.is_available() and device_config == "cuda_if_available" else "cpu"
     
     # Load model
     try:
-        model = load_cached_model(model_config["checkpoint_path"])
+        model = load_cached_model(model_config)
     except Exception as e:
         st.error(f"Failed to load model: {str(e)}")
         return
@@ -208,11 +212,10 @@ def main():
             
             finally:
                 # Clean up (optional, keep for debugging)
-                # if os.path.exists(file_path):
-                #     os.remove(file_path)
-                # if os.path.exists(mask_path):
-                #     os.remove(mask_path)
-                pass
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                if os.path.exists(mask_path):
+                    os.remove(mask_path)
             
         except Exception as e:
             st.error(f"Error processing image: {str(e)}")
