@@ -21,7 +21,7 @@ def load_model(model_path: str=None, gg_id: str=None) -> torch.nn.Module:
         raise ValueError("Require model_path and/or gg_id")
     if not os.path.exists(model_path):
         if gg_id is None:
-            raise FileNotFoundError(f"Model file {model_path} not found")
+            raise FileNotFoundError(f"Must required gg_id!")
         gdown.download(f"https://drive.google.com/uc?id={gg_id}", model_path, quiet=False)
 
     model = DeepLabV3Plus(in_channels=3, num_classes=3)
