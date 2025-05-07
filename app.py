@@ -13,7 +13,9 @@ def load_cached_model(model_config: dict) -> torch.nn.Module:
     """Load and cache DeepLabv3+ model."""
     try: 
         return load_model(**model_config)
-    except:
+    except Exception as e:
+        print('=========================================')
+        print(e)
         raise FileNotFoundError("Cannot load model!")
 
 def load_config(config_path: str = "config.yaml") -> dict:
