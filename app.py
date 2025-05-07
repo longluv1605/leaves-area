@@ -14,9 +14,7 @@ def load_cached_model(model_config: dict) -> torch.nn.Module:
     try: 
         return load_model(**model_config)
     except Exception as e:
-        print('=========================================')
-        print(e)
-        raise FileNotFoundError("Cannot load model!")
+        raise e
 
 def load_config(config_path: str = "config.yaml") -> dict:
     """Load configuration from YAML file.
