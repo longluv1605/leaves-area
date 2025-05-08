@@ -4,3 +4,4 @@ data/*/*.jpg
 data/*
 save/*/*.pth
 **pycache**
+submit.txt

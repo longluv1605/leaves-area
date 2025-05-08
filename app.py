@@ -151,7 +151,8 @@ def display_results(area_value: float, original_image: Image.Image, mask_image: 
 
 def main():
     """Main function to run the Streamlit app."""
-    st.title("Leaf Area Calculator")
+    st.set_page_config(page_title="Spinach")
+    st.title("Spinach Leaf Area Calculator")
     
     # Load configuration
     try:
