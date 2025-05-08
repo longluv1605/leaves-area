@@ -22,10 +22,10 @@ leaves-area/
 │           └── val/
 │               ├── val_image_mask.png
 │               └── ...
-├── images/
-│   ├── im1.jpg
-│   ├── im2.jpg
-│   └── ...
+├── notebooks/
+│   └── *.ipynb
+├── test_images/
+│   └── *.jpg
 ├── results/
 │   ├── baseline/
 │   │   └── *.png
@@ -35,7 +35,7 @@ leaves-area/
 │   ├── hyperparams/
 │   │   └── *.pth
 │   └── models/
-│       └── deeplabv3plus.pth
+│       └── *.pth
 ├── src/
 │   ├── baseline/
 │   │   ├── main.py
@@ -53,11 +53,13 @@ leaves-area/
 │       ├── config.yaml
 │       └── main.py
 ├── .gitignore
+├── app.py
+├── area.py
+├── config.yaml
+├── fastapi.py
 ├── README.MD
-├── requirements.txt
-├── data_analyst.ipynb
-├── deeplabv3plus*.ipynb
-└── baseline.ipynb
+├── LICENSE
+└── requirements.txt
 ```
 
 ## Installation
@@ -92,9 +94,7 @@ See `requirements.txt` for a complete list.
 
 ## Usage
 
-The `src/dl_method/main.py` script trains a DeepLabV3+ model on a spinach segmentation dataset, evaluates performance, and visualizes results. It uses early stopping to prevent overfitting and saves the best model and visualization results. Hyperparameters, data augmentations, and loss settings are configured via `src/dl_method/config.yaml`.
-
-### Running the Script
+### Train and evaluate model
 
 ```bash
 python src/dl_method/main.py
@@ -108,6 +108,14 @@ This will:
 4. Save the best model to `save/models/model_<timestamp>.pth`.
 5. Visualize segmentation results for validation images in `results/deeplabv3plus/val_<index>.png`.
 6. Visualize segmentation for new images in `results/deeplabv3plus/new_image_<index>.png`.
+
+### Running demo application
+
+```bash
+streamlit run app.py
+```
+
+This will running our demo app using streamlit.
 
 ## Development Standards
 
