@@ -3,6 +3,7 @@
 This repository implements the DeepLabV3+ model for semantic segmentation using PyTorch. The model is designed for flexibility and portability across different systems.
 
 **Try this application [here](https://leaves-area-22022604.streamlit.app/).**
+**SLIDE and VIDEO [here](https://drive.google.com/drive/folders/1mu-JTWVlR9Xnx8Lpc2TeGX4m6CsfwNMa)**
 
 ## Project Structure
 
